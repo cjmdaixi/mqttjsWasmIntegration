@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<head>Mqtt.js demo</head>
+<body>
+    <script src="./mqtt.4.3.5.js"></script>
+    <script src="./lib.js"></script>
+    <script>
+        let options = {
+            clean: true,
+            clientId: 'mqttjs_test'
+        }
+        console.log('Connecting mqtt client')
+        var client = mqtt.connect('ws://localhost:1884/mqtt', options)
+        client.on('connect', function () {
+            console.log('js Connected')
+            Module.ccall('onConnected', null)
+            client.subscribe('test')
+
+            const publish = Module.addFunction(function(topic, payload){
+                client.publish(Module.UTF8ToString(topic), Module.UTF8ToString(payload));
+            }, 'vii');
+            //Module.ccall('setPublishFunction', null, ['number'], [publish]);
+            Module._publish = publish;
+        })
+
+        client.on('message', function (topic, message) {
+            // message is Buffer
+            console.log('js' + message.toString())
+            //let j = JSON.parse(message)
+            Module.ccall('onMessageReceived', null, ['string', 'string'], [topic.toString(), message.toString()])
+            // var topic_ptr  = Module.allocate(Module.intArrayFromString(topic), 'i8', ALLOC_NORMAL);
+            // var message_ptr  = Module.allocate(Module.intArrayFromString(message), 'i8', ALLOC_NORMAL);
+            // Module.ccall('onMessageReceived', null, ['string', 'string'], [topic_ptr, message_ptr]
+        })
+    </script>
+</body>
